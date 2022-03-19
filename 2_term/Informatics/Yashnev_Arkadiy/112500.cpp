@@ -1,0 +1,124 @@
+#include <iostream>
+#include <string>
+#include <queue>
+#include <stack>
+#include <cmath>
+#include <iomanip>
+
+using std::cin, std::cout, std::string;
+
+bool is_op(char ch) { return ch == '+' || ch == '-' || ch == '*' || ch == '/'; }
+bool is_op(string const &op) { return op == "+" || op == "-" || op == "*" || op == "/"; }
+int priority(char ch) { return ch == '+' || ch == '-' ? 1 : 2; }
+
+int div_(int a, int b) {
+    return (int) std::floor((double) a / (double) b);
+}
+
+double div_(double a, double b) {
+    return a / b;
+}
+
+template<typename T>
+T calculate(std::queue<string> input);
+template<typename T>
+void infix_input(std::queue<string> &output);
+void postfix_output(std::queue<string> output);
+
+int main() {
+    std::queue<string> output;
+
+    infix_input<double>(output);
+    cout << std::fixed << std::setprecision(3) << calculate<double>(output);
+}
+
+void postfix_output(std::queue<string> output) {
+    while(!output.empty()) {
+        cout << output.front() << " ";
+        output.pop();
+    }
+    cout << "\n";
+}
+
+template <typename T>
+T calculate(std::queue<string> input) {
+    std::stack<T> stack;
+    while(!input.empty()) {
+        if(std::isdigit(input.front()[0])) {
+            stack.push(std::stod(input.front()));
+            input.pop();
+        } else if(is_op(input.front())) {
+            T a2 = stack.top(); stack.pop();
+            T a1 = stack.top(); stack.pop();
+            switch(input.front()[0]) {
+                case '+': stack.push(a1 + a2); break;
+                case '-': stack.push(a1 - a2); break;
+                case '*': stack.push(a1 * a2); break;
+                case '/': stack.push(div_(a1, a2)); break;
+            }
+            input.pop();
+        } else {
+            T a = stack.top(); stack.pop();
+            switch(input.front()[1]) {
+                case 'i': stack.push(std::sin(a)); break;
+                case 'o': stack.push(std::cos(a)); break;
+                case 'b': stack.push(std::abs(a)); break;
+                case 'q': stack.push(std::sqrt(a)); break;
+            }
+            input.pop();
+        }
+    }
+
+    return stack.top();
+}
+
+template<typename T>
+void infix_input(std::queue<string> &output) {
+    std::stack<string> stack;
+
+    char peek;
+    while((peek = (char) cin.peek()) != '\n') {
+        if(peek == ' ') {
+            cin.get();
+            continue;
+        } else if(std::isdigit(peek)) {
+            T n; cin >> n;
+            output.push(std::to_string(n));
+        } else if(std::isalpha(peek)) {
+            cin.get();
+            switch ((char) cin.peek()) {
+                case 'i': stack.push("sin"); cin.get(); cin.get(); break;
+                case 'o': stack.push("cos"); cin.get(); cin.get(); break;
+                case 'b': stack.push("abs"); cin.get(); cin.get(); break;
+                case 'q': stack.push("sqrt"); cin.get(); cin.get(); break;
+            }
+        } else if(is_op(peek)) {
+            cin.get();
+            while(!stack.empty() && is_op(stack.top()) && (priority(stack.top()[0]) >= priority(peek))) {
+                output.push(stack.top());
+                stack.pop();
+            }
+            string tmp = " "; tmp[0] = peek;
+            stack.push(tmp);
+        } else if(peek == '(') {
+            cin.get();
+            stack.push("(");
+        } else if(peek == ')') {
+            cin.get();;
+            while(stack.top() != "(") {
+                output.push(stack.top());
+                stack.pop();
+            }
+            stack.pop();
+            if(!stack.empty() && stack.top().size() > 1) {
+                output.push(stack.top());
+                stack.pop();
+            }
+        }
+    }
+
+    while(!stack.empty() && is_op(stack.top())) {
+        output.push(stack.top());
+        stack.pop();
+    }
+}
