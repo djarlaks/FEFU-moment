@@ -1,67 +1,53 @@
-#pragma ide diagnostic ignored "misc-no-recursion"
-#include <vector>
-#include <string>
-#include <fstream>
-
-using std::vector, std::string;
-
-size_t const LEN = 3;
-size_t const ALPH_LEN = 52;
-
-void bucket_sort(vector<string> &arr, int size);
-
-int idx(char c) {
-    if('A' <= c && c <= 'Z') {
-        return (c - 'A');
-    }
-    return (c - 'a' + 26);
-}
-
+#include "fstream"
+#include "vector"
+ 
+#define in_min(a, b) (in[a] < in[b] ? (a) : (b))
+int *in, *up, timer = 0;
+std::vector<std::vector<int>> graph;
+std::vector<int> answers;
+void DFS_finding_articulations(int, int);
+ 
 int main() {
     std::ifstream fin("input.txt");
     std::ofstream fout("output.txt");
-    int N;
-    fin >> N;
-    vector<string> arr(N);
-
-    for (int i = 0; i < N; ++i) fin >> arr[i];
-    bucket_sort(arr, N);
-    for (int i = 0; i < N; ++i) fout << arr[i] << '\n';
-
+    int N, M;
+    fin >> N >> M;
+    graph.resize(N);
+    in = new int[N]{0};
+    up = new int[N];
+    for (int i = 0; i < N; ++i) up[i] = i;
+ 
+    for (int line = 0, num1, num2; line < M; ++line) {
+        fin >> num1 >> num2;
+        graph[num1 - 1].push_back(num2 - 1);
+        graph[num2 - 1].push_back(num1 - 1);
+    }
+    DFS_finding_articulations(0, -1);
+    fout << answers.size();
+    for (int num : answers) fout << ' ' << num + 1;
+ 
+    delete[] in;
+    delete[] up;
     fin.close();
     fout.close();
     return 0;
 }
-
-void sort_with_depth(vector<string*> &bucket, int lvl);
-
-void bucket_sort(vector<string> &arr, int size) {
-    vector<string *> pointers(size);
-    for (int i = 0; i < size; ++i) pointers[i] = &arr[i];
-
-    sort_with_depth(pointers, LEN);
-
-    vector<string> answers(size);
-    for(int i = 0; i < size; ++i) answers[i] = *pointers[i];
-    for(int i = 0; i < size; ++i) arr[i] = answers[i];
-}
-
-void sort_with_depth(vector<string*> &bucket, int lvl) {
-    if(bucket.empty() || (lvl == 0)) return;
-
-    vector<vector<string*>> next_layer(ALPH_LEN);
-    int index = (int) LEN - lvl;
-
-    for(auto &word : bucket) {
-        next_layer[idx((*word)[index])].push_back(word);
-    }
-
-    int count = 0;
-    for(int i = 0; i < ALPH_LEN; ++i) {
-        sort_with_depth(next_layer[i], lvl - 1);
-        for(auto &word : next_layer[i]) {
-            bucket[count] = word;
-            ++count;
+ 
+void DFS_finding_articulations(int cell_id, int father_id) {
+    in[cell_id] = ++timer;
+    bool articulation_flag = false;
+    int children = 0;
+    for (int sun_id : graph[cell_id]) {
+        if ((sun_id != father_id) && (in[sun_id] < in[cell_id])) {
+            if (in[sun_id] == 0) {
+                ++children;
+                DFS_finding_articulations(sun_id, cell_id);
+                if(in[up[sun_id]] >= in[cell_id]) articulation_flag = true;
+                up[cell_id] = in_min(up[cell_id], up[sun_id]);
+            }
+            else up[cell_id] = in_min(up[cell_id], sun_id);
         }
     }
+    if ((father_id == -1) && (children < 2)) articulation_flag = false;
+    if (articulation_flag) answers.push_back(cell_id);
 }
