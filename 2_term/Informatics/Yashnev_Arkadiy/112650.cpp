@@ -33,6 +33,7 @@ int main() {
                 }
             }
         }
+        
         ostov[k].first = i_min;
         ostov[k].second = j_min;
         int c = colors[j_min];

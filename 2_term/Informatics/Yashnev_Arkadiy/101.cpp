@@ -24,7 +24,11 @@ vector<size_t> prefix(string const &str) {
 int main() {
     string str;
     getline(cin, str);
-    auto vec= prefix(str);
+    auto vec = prefix(str);
+    for(auto it : vec) {
+        cout << it << " ";
+    }
+    cout << "\n";
     cout << vec.size() - vec.back();
     return 0;
 }
